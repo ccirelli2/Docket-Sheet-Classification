@@ -83,8 +83,10 @@ def clean_andTokenize_text(Text_file):
     Text_strip_stopWords = filter(lambda x: (x not in Stopwords), Text_tok_stripPunct)
     # Strip Non-Alpha
     Text_strip_nonAlpha = filter(lambda x: x.isalpha(), Text_strip_stopWords)
+    # Stip 2 letter words
+    Text_strip_2letter_words = filter(lambda x: len(x)>3, Text_strip_nonAlpha)
     # Return cleaned and tokenized text
-    return Text_strip_nonAlpha
+    return Text_strip_2letter_words
 
 
 # FREQUENCY DISTRIBUTION FUNCTION
@@ -169,7 +171,7 @@ def create_dataframe_setWord_freqDist(df_Master_DocketSheet_File, Set_tokenized_
         df_docketSheet_stage_N = df_Master_DocketSheet_File[Match_period]
         
         # Get the Frequency Distribution of setWords for the current Stage
-        List_setWord_freqDist = dsc_m.get_freq_Dist_setWord_Single_timePeriod(df_docketSheet_stage_N, df_docketsheet_wordSet)
+        List_setWord_freqDist = get_freq_Dist_setWord_Single_timePeriod(df_docketSheet_stage_N, df_docketsheet_wordSet)
         
         # Create a Column in the Master Dataframe representing the frequency Distribution for each LC Stage
         df_docketsheet_wordSet['Life Cycle Stage: '+str(stage)] = List_setWord_freqDist 
