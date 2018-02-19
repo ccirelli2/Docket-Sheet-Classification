@@ -62,7 +62,7 @@ def import_concatTxt(filename):
     return File_open.read()
 
 
-# CREATE SET FROM CONCATENATED TEXT FILE
+# CLEAN & TOKENIZE CONCATENATED TEXT FILE
 
 def clean_andTokenize_text(Text_file):
     '''
@@ -179,9 +179,13 @@ def create_dataframe_setWord_freqDist(df_Master_DocketSheet_File, Set_tokenized_
 
 
 
+# WRITE FILE TO EXCEL
 
-
-
+def write_to_excel(dataframe, filename):
+    import pandas as pd
+    writer = pd.ExcelWriter(filename+'.xlsx')
+    dataframe.to_excel(writer, sheet_name = 'Data')
+    writer.save()
 
 
 
