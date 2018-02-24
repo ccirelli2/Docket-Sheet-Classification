@@ -6,7 +6,8 @@ import re
 import nltk
 import pandas as pd
 import string
-
+from nltk.stem import *
+stemmer = PorterStemmer()
 
 # IMPORT TARGET FILE / DELIMIT ROWS / REMOVE ROWS PERIOD = NONE
 
@@ -49,7 +50,7 @@ def create_Concatenated_text_file(df_docketFile, new_file_name):
         New_File.write('\n')
     # Close File
     New_File.close()
-    
+    print('Concatenated text created\n')
     return None
 
 
@@ -59,6 +60,7 @@ def import_concatTxt(filename):
     # Import Concat Text File
     File = filename
     File_open = open(File) 
+    print('Concatenated text imported\n')
     return File_open.read()
 
 
@@ -85,8 +87,12 @@ def clean_andTokenize_text(Text_file):
     Text_strip_nonAlpha = filter(lambda x: x.isalpha(), Text_strip_stopWords)
     # Stip 2 letter words
     Text_strip_2letter_words = filter(lambda x: len(x)>3, Text_strip_nonAlpha)
+    # Take Stem of Each Token 
+    Text_stem = [stemmer.stem(x) for x in Text_strip_2letter_words]
+    # Create a set of the final list
+    Text_set = set(Text_stem)
     # Return cleaned and tokenized text
-    return Text_strip_2letter_words
+    return Text_set
 
 
 # FREQUENCY DISTRIBUTION FUNCTION
@@ -110,7 +116,7 @@ def get_freq_Dist_setWord_Single_timePeriod(df_docketSheet_single_TimePeriod, df
         # Iterate over each row in the docket sheet, all of which are part of the same life cycle period.  
         for row in df_docketSheet_single_TimePeriod.itertuples():
             
-            # Keep count of each token list we iterate over.  This will be the denominator for calculating our average. 
+            # Keep count of each row we iterate over.  This will be the denominator for calculating our average. 
             Count_num_rows += 1
 
             # Run clearning and tokenizing function over each row.  Return list of clean tokens. 
@@ -132,6 +138,7 @@ def get_freq_Dist_setWord_Single_timePeriod(df_docketSheet_single_TimePeriod, df
         List_avg_appearance_set_word.append(Avg)
     
     # Return to the user the List containing the average appearance of each setWord. 
+    print('List_avg_appearaance returned\n')
     return List_avg_appearance_set_word
 
 
@@ -163,9 +170,11 @@ def create_dataframe_setWord_freqDist(df_Master_DocketSheet_File, Set_tokenized_
     # Create Dataframe whose index is the set of words from our concatenated text file.
     df = pd.DataFrame(Set_tokenized_concatText)
     df_docketsheet_wordSet = df.set_index(0)
-    
+    Count = 0
     # Iterate over Life Cycle Stages
     for stage in List_LC_stages:
+        Count += 1
+        print('Stage', Count, '\n')
         # Limit the Master DocketSheet File to the current stage
         Match_period = df_Master_DocketSheet_File['Time Period'] == stage
         df_docketSheet_stage_N = df_Master_DocketSheet_File[Match_period]
