@@ -8,6 +8,7 @@ import pandas as pd
 import string
 from nltk.stem import *
 stemmer = PorterStemmer()
+from nltk import corpus
 
 # IMPORT TARGET FILE / DELIMIT ROWS / REMOVE ROWS PERIOD = NONE
 
@@ -63,8 +64,23 @@ def import_concatTxt(filename):
     print('Concatenated text imported\n')
     return File_open.read()
 
+# CREATE A SET OF ALL HUMAN NAMES FROM THE NLTK CORPUS LIBRARY
 
-# CLEAN & TOKENIZE CONCATENATED TEXT FILE
+def get_set_human_names():
+    '''
+    Purpose:  obtain a set of all human names
+    Input:    none
+    Output:   Set of of both female and male names
+    '''
+    # Create a lise of Male names, convert to lower case, split on '\n' as the text reads in a string as unicode
+    Male_names = corpus.names.open('male.txt').read().lower().split('\n')
+    # Create a lise of female names, convert to lower case, split on '\n' as the text reads in a string as unicode
+    Female_names = corpus.names.open('female.txt').read().lower().split('\n')
+    # Return to the user a set of the concatenation of both lists. 
+    return set(Male_names + Female_names)
+
+
+# CLEAN & TOKENIZE CONCATENATED TEXT FILE & RETURN SET
 
 def clean_andTokenize_text(Text_file):
     '''
@@ -73,8 +89,10 @@ def clean_andTokenize_text(Text_file):
     Return     = Object = Set; Set = cleaned, isalpha only tokens
     '''
     # Strip Lists
-    Punct_list = [punct for punct in string.punctuation]
+    Punct_list = set((punct for punct in string.punctuation))
     Stopwords = nltk.corpus.stopwords.words('english')
+    Set_names = get_set_human_names()
+    
     # Tokenize Text
     Text_tokenized = nltk.word_tokenize(Text_file)
     # Convert tokens to lowercase
@@ -85,15 +103,50 @@ def clean_andTokenize_text(Text_file):
     Text_strip_stopWords = filter(lambda x: (x not in Stopwords), Text_tok_stripPunct)
     # Strip Non-Alpha
     Text_strip_nonAlpha = filter(lambda x: x.isalpha(), Text_strip_stopWords)
-    # Stip 2 letter words
+    # Strip 2 letter words
     Text_strip_2letter_words = filter(lambda x: len(x)>3, Text_strip_nonAlpha)
+    # Strip all human names
+    Text_strip_names = filter(lambda x: x not in Set_names, Text_strip_2letter_words)
     # Take Stem of Each Token 
-    Text_stem = [stemmer.stem(x) for x in Text_strip_2letter_words]
+    Text_stem = [stemmer.stem(x) for x in Text_strip_names]
     # Create a set of the final list
     Text_set = set(Text_stem)
     # Return cleaned and tokenized text
     return Text_set
 
+
+
+# CLEAN & TOKENIZE CONCATENATED TEXT FILE & RETURN LIST
+
+def clean_andTokenize_text_return_list(Text_file):
+    '''
+    Input      = Text File
+    Operations = Tokenize, lowercase, strip punctuation/stopwords/nonAlpha
+    Return     = Object = Set; Set = cleaned, isalpha only tokens
+    '''
+    # Strip Lists
+    Punct_list = set((punct for punct in string.punctuation))
+    Stopwords = nltk.corpus.stopwords.words('english')
+    Set_names = get_set_human_names()
+    
+    # Tokenize Text
+    Text_tokenized = nltk.word_tokenize(Text_file)
+    # Convert tokens to lowercase
+    Text_lowercase = (token.lower() for token in Text_tokenized)
+    # Strip Punctuation
+    Text_tok_stripPunct = filter(lambda x: (x not in Punct_list), Text_lowercase)
+    # Strip Stopwords
+    Text_strip_stopWords = filter(lambda x: (x not in Stopwords), Text_tok_stripPunct)
+    # Strip Non-Alpha
+    Text_strip_nonAlpha = filter(lambda x: x.isalpha(), Text_strip_stopWords)
+    # Strip 2 letter words
+    Text_strip_2letter_words = filter(lambda x: len(x)>3, Text_strip_nonAlpha)
+    # Strip all human names
+    Text_strip_names = filter(lambda x: x not in Set_names, Text_strip_2letter_words)
+    # Take Stem of Each Token 
+    Text_stem = [stemmer.stem(x) for x in Text_strip_names]
+    # Return cleaned and tokenized text
+    return Text_stem
 
 # FREQUENCY DISTRIBUTION FUNCTION
 
