@@ -121,7 +121,7 @@ def get_df_top5words_Target_nearZero_highest_AVG(dataframe, Stage):
     df_limit = dataframe.iloc[:,0] < .05
     df_avg_range = dataframe[df_limit]
     
-    # Sort the Dataframe col "STDV_freq" descending = True. 
+    # Sort the Dataframe col "CV" descending = True. 
     df_sorted = df_avg_range.sort_values(by = 'AVG', ascending = False)
     
     # Obtain First 5 Rows
@@ -134,7 +134,7 @@ def get_df_top5words_Target_nearZero_highest_AVG(dataframe, Stage):
     df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
     
     # Create a Column to Capture the STDV for each word.
-    df_final['Stage 1: STDV_freq'] = [row for row in df_sorted_topFive['STDV_freq']]
+    df_final['Stage 1: CV'] = [row for row in df_sorted_topFive['CV']]
     
     # Retun the final dataframe
     return df_final
