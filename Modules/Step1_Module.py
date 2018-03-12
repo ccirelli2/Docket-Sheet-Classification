@@ -92,7 +92,6 @@ def clean_andTokenize_text(Text_file):
     Punct_list = set((punct for punct in string.punctuation))
     Stopwords = nltk.corpus.stopwords.words('english')
     Set_names = get_set_human_names()
-    
     # Tokenize Text
     Text_tokenized = nltk.word_tokenize(Text_file)
     # Convert tokens to lowercase
@@ -105,14 +104,15 @@ def clean_andTokenize_text(Text_file):
     Text_strip_nonAlpha = filter(lambda x: x.isalpha(), Text_strip_stopWords)
     # Strip 2 letter words
     Text_strip_2letter_words = filter(lambda x: len(x)>3, Text_strip_nonAlpha)
-    # Strip all human names
-    Text_strip_names = filter(lambda x: x not in Set_names, Text_strip_2letter_words)
     # Take Stem of Each Token 
-    Text_stem = [stemmer.stem(x) for x in Text_strip_names]
+    Text_stem = [stemmer.stem(x) for x in Text_strip_2letter_words]
     # Create a set of the final list
     Text_set = set(Text_stem)
+    # Strip names
+    Text_strip_names_2 = list((filter(lambda x: x not in Set_names, Text_set)))
+    
     # Return cleaned and tokenized text
-    return Text_set
+    return Text_strip_names_2
 
 
 
