@@ -46,7 +46,7 @@ def limit_dataframe(dataframe, methodology):
 # FUNCTION TO OBTAIN TOP WORDS BASED ON THE METHODOLOGY SELECTED
 
 
-def get_top_words(dataframe, methodology):
+def get_top_words(dataframe, methodology, Stage):
     '''
     Methodology_I:
     Input         = 'Top15_highest_STDV_homebrew', 
@@ -98,8 +98,13 @@ def get_top_words(dataframe, methodology):
         df_sorted = df_limited.sort_values(by = 'STDV', ascending = False)
         # Get first 15 rows
         df_sorted_topFive = df_sorted.iloc[:15,]
+        #print('df sorted top words', df_sorted_topFive)
+        print('length top words', len(df_sorted_topFive))
+        
         # Create New Dataframe Whose Index = 0-15
-        df_final = pd.DataFrame({}, index = [range(0,15)])
+        df_final = pd.DataFrame({}, index = [x for x in range(0,15)])
+        print('length shell df', len(df_final.index))
+        
         # Create a col in the new df to capture the top 15 words. 
         df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
         # Create a Column to Capture the STDV for each word.
