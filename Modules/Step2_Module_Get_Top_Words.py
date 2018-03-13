@@ -19,7 +19,7 @@ def limit_dataframe(dataframe, methodology):
         delimiter = dataframe.AVG.between(0, 0.05)
         df_limited = dataframe[delimiter]
           
-    elfi methodology == 'Top5_highest_STDV_AVG_below_20prct':
+    elif methodology == 'Top5_highest_STDV_AVG_below_20prct':
         # If this methodology is selected, limit the AVG to between 5 and 20%. 
         delimiter = dataframe.AVG.between(.05, 0.2)
         df_limited = dataframe(delimiter)

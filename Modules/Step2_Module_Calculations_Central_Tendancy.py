@@ -8,7 +8,7 @@ import math
 #### FUNCTIONS TO CALCULATE MEASUREMENTS OF CENTRAL TENDANCY
 
 
-get_Measurements_CentralTendancy(dataframe, measurement):
+def get_Measurements_CentralTendancy(dataframe, measurement):
     '''
     Calculation_I:
         Input       = 'CalculationI_homebrew_STDV'
