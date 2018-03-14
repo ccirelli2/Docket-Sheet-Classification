@@ -22,7 +22,7 @@ def limit_dataframe(dataframe, methodology):
     elif methodology == 'Top5_highest_STDV_AVG_below_20prct':
         # If this methodology is selected, limit the AVG to between 5 and 20%. 
         delimiter = dataframe.AVG.between(.05, 0.2)
-        df_limited = dataframe(delimiter)
+        df_limited = dataframe[delimiter]
     
     elif methodology == 'Top5_lowest_STDV_highest_AVG':
         # If this methodology is selected, limit the STDV to less than 10%. 
@@ -98,12 +98,9 @@ def get_top_words(dataframe, methodology, Stage):
         df_sorted = df_limited.sort_values(by = 'STDV', ascending = False)
         # Get first 15 rows
         df_sorted_topFive = df_sorted.iloc[:15,]
-        #print('df sorted top words', df_sorted_topFive)
-        print('length top words', len(df_sorted_topFive))
-        
+       
         # Create New Dataframe Whose Index = 0-15
         df_final = pd.DataFrame({}, index = [x for x in range(0,15)])
-        print('length shell df', len(df_final.index))
         
         # Create a col in the new df to capture the top 15 words. 
         df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
@@ -118,7 +115,7 @@ def get_top_words(dataframe, methodology, Stage):
         # Get first 15 rows
         df_sorted_topFive = df_sorted.iloc[:15,]
         # Create New Dataframe Whose Index = 0-15
-        df_final = pd.DataFrame({}, index = [range(0,15)])
+        df_final = pd.DataFrame({}, index = [x for x in range(0,15)])
         # Create a col in the new df to capture the top 15 words. 
         df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
         # Create a Column to Capture the COCEOF for each word.
@@ -156,7 +153,7 @@ def get_top_words(dataframe, methodology, Stage):
     
     elif methodology == 'Top5_highest_STDV_AVG_below_20prct':
         # Sort the Dataframe col "CV" descending = True. 
-        df_sorted = df_target_limited.sort_values(by = 'STDV', ascending = False)
+        df_sorted = df_limited.sort_values(by = 'STDV', ascending = False)
 
         # Check to see if the length of the dataframe is 5 or more. 
         if len(df_sorted) > 4:
@@ -182,7 +179,7 @@ def get_top_words(dataframe, methodology, Stage):
             
     elif methodology == 'Top5_lowest_STDV_highest_AVG':
         # Sort the Dataframe col "CV" descending = True. 
-        df_sorted = df_avg_range.sort_values(by = 'AVG', ascending = False)
+        df_sorted = df_limited.sort_values(by = 'AVG', ascending = False)
         # Obtain First 5 Rows
         df_sorted_topFive = df_sorted.iloc[:5,]
         # Create New Dataframe Whose Index = 0-4
@@ -195,7 +192,7 @@ def get_top_words(dataframe, methodology, Stage):
     
     elif methodology == 'Top5_lowest_COCOEF_highest_AVG':
         # Sort the Dataframe col "CV" descending = True. 
-        df_sorted = df_avg_range.sort_values(by = 'COCOEF', ascending = False)
+        df_sorted = df_limited.sort_values(by = 'COCOEF', ascending = False)
         # Obtain First 5 Rows
         df_sorted_topFive = df_sorted.iloc[:5,]
         # Create New Dataframe Whose Index = 0-4
