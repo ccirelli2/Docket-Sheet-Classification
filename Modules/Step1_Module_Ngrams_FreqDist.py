@@ -142,137 +142,200 @@ def get_Ngrams(Clean_tokenized_text, Ngram_selection):
     return List_Ngrams
 
 
-def get_Ngrams_FreqDist(Tokenized_text, Ngram_selection):
+# FUNCTION TO CREATE AN NGRAM COLUMN
+    
+def create_Ngram_column(dataframe, Ngrams):
     '''
-    Input     Text must be tokenized before using this function. 
-              Must select an Ngram to get.  Options = Bigrams, Trigrams, Quadgrams. 
-    
-    '''
-    
-    Dict_Ngram_freq_dist = {}
-   
-    if Ngram_selection == 'Bigrams':
-        Text_bigrams = (((x,y)) for x,y in zip(Tokenized_text, 
-                                               Tokenized_text[1:]))
-        for x in Text_bigrams:
-            Dict_Ngram_freq_dist[x] = Dict_Ngram_freq_dist.get(x, 0) + 1
-            
-    elif Ngram_selection == 'Trigrams':
-        Text_trigrams = (((x,y,z)) for x,y,z in zip(Tokenized_text, 
-                                                    Tokenized_text[1:], 
-                                                    Tokenized_text[2:]))
-        for x in Text_trigrams:
-            Dict_Ngram_freq_dist[x] = Dict_Ngram_freq_dist.get(x, 0) + 1
-
-    elif Ngram_selection == 'Quadgrams':
-        Text_quadgrams = (((w,x,y,z)) for w,x,y,z in zip(Tokenized_text, 
-                                                    Tokenized_text[1:], 
-                                                    Tokenized_text[2:], 
-                                                    Tokenized_text[3:]))
-        for x in Text_quadgrams:
-            Dict_Ngram_freq_dist[x] = Dict_Ngram_freq_dist.get(x, 0) + 1
-    
-    return Dict_Ngram_freq_dist
-        
-                          
-# FREQUENCY DISTRIBUTION FUNCTION
-
-def get_freq_Dist_setWord_Single_timePeriod(df_docketSheet_single_TimePeriod, df_docketsheet_wordSet, Ngrams):
-    '''The purpose of this function is to calculate the frequency with which each setword appears in a single lifecycle time period. 
-    Input  = df_docketsheet_wordSet, docket_sheet_dataframe
-    Output = List with each value representing the avg that each setWord appears in the text. 
+    Purpose:    The purpose of this code is to:
+                1.) to adjust our dataframe to account for the fact that the pandas multiindex merges the 
+                cells that contain the same words.     
+                2.) Create a single column that includes a tuple of the Ngrams.
+                3.) Remove the old columns. 
+                
+    Input:      Output from our FreqDist function
+    Output:     The same dataframe but withou the individual word columns, which is replaced with a single column 
+                representing our Ngrams. 
     '''
     
-    # List to capture the average count each set_word appears in the docket sheet.  
-    List_avg_appearance_set_word = []
     
-    # For each word_set in the word_set index:
-    for word_set in df_docketsheet_wordSet.index:
-        
-        # Define your counts to capture. 
-        Count_num_rows = 0
-        Count_matches = 0
-        
-        # Iterate over each row in the docket sheet, all of which are part of the same life cycle period.  
-        for row in df_docketSheet_single_TimePeriod.itertuples():
-            
-            # Keep count of each row we iterate over.  This will be the denominator for calculating our average. 
-            Count_num_rows += 1
-
-            # Clean, Tokenize and get Ngrams for the text in our docket sheet. 
-            clean_tokenized_text = get_Ngrams(clean_andTokenize_text(row[4]), Ngrams)
-            
-            # Check to see if in the given row there is a match. 
-            if word_set in clean_tokenized_text:
-                # Count the match. 
-                Count_matches +=1
-        
-        # Calculate the avg times the set word appears in the text.  
-        '''Note that we are now outside of the loop to iterate over the rows, bust still within the word_set loop. 
-           Therefore, this will calculate the avg for each setWord'''
-        
-        Avg = round((Count_matches / Count_num_rows),2)
-        
-        # Append the average value to the list.  Each value will coinside with a setWord.  
-        #Since we are within the loop the order between setWord and value will be kept. 
-        List_avg_appearance_set_word.append(Avg)
     
-    # Return to the user the List containing the average appearance of each setWord. 
-    return List_avg_appearance_set_word
-
-
-
-
-# CREATE A DATAFRAME WHOSE INDEX IS THE SET OF WORDS AND COLUMNS THE FREQ DIST FOR EACH STAGE OF THE LIFE CYCLE
-
-def create_dataframe_setWord_freqDist(df_Master_DocketSheet_File, Set_tokenized_concatText, Ngrams):
-    '''The purpose of this function is to create a dataframe whose index is the set of unique words taken from our concatenated text file, and
-       whose columns represent each stage of the life cycle time period, and 
-       whose values equal the average frequency of that word for the given stage
-       
-       Input      = Docket Sheet Master Dataframe
-       Operations = 1.) Create a set of the Life Cycle Stages from the Master Docket Sheet. These will be our columns. 
-                    2.) Create a dataframe whose index is the set of unique words from our concatenated text file. 
-                    3.) Iterate over each stage in this set
-                    4.) Limit the dataframe to each stage
-                    5.) Obtain the set_Word frequency distribution for that stage.  This function cleans and tokenizes the text for the given stage
-                        and returns a list of the frequency for the stage for each word in the index.  So the frequencies match up with each word
-                        in the index. 
-                    6.) For each frequency distribution list return from step 5, create a column in our dataframe whose name is the life cycle stage 
-                        in question. 
-       
-    '''
     
-    # Create a set of Life Cycle Time Periods from the Master Docket Sheet File
-    List_LC_stages = set(df_Master_DocketSheet_File['Time Period'])
     
-    # Create Dataframe whose index is the set of words from our concatenated text file.
-    df = pd.DataFrame(Set_tokenized_concatText)
-    df_docketsheet_wordSet = df.set_index(0)
-    Count = 0
-    # Iterate over Life Cycle Stages
-    for stage in List_LC_stages:
-        Count += 1
-        print('Stage', Count, '\n')
-        # Limit the Master DocketSheet File to the current stage
-        Match_period = df_Master_DocketSheet_File['Time Period'] == stage
-        df_docketSheet_stage_N = df_Master_DocketSheet_File[Match_period]
+    # Create lists to capture each word in the target column. 
+    List_level_0 = []
+    List_level_1 = []
+    List_level_2 = []
+    
+    # Create a list to capture our new column where where the none values are converted to the last actual word.
+    New_column_0 = []
+    New_column_1 = []
+    New_column_2 = []
+    
+    # Lists to capture tuples
+    List_tuple_bigrams = []
+    List_tuple_trigrams = []
+    List_tuple_quadgrams = []
+
+    
+    # Reset the index
+    dataframe_reset_index = dataframe.reset_index()
+    
+    # For each word in the target column
+    
+    if Ngrams == 'Nograms':
+        print('Because you selected Nograms, no adjustment is required.', 'Function is returning the original dataframe.','\n', '\n')
         
-        # Get the Frequency Distribution of setWords for the current Stage
-        List_setWord_freqDist = get_freq_Dist_setWord_Single_timePeriod(df_docketSheet_stage_N, df_docketsheet_wordSet, Ngrams)
         
-        # Create a Column in the Master Dataframe representing the frequency Distribution for each LC Stage
-        df_docketsheet_wordSet['Life Cycle Stage: '+str(stage)] = List_setWord_freqDist 
+    # BIGRAMS
     
-    # Return our completed Word Frequency Distribution Dataframe
-    return df_docketsheet_wordSet
+    elif Ngrams == 'Bigrams':
+        for word in dataframe_reset_index['level_0']:
+        # Append each word to the list. 
+            if isinstance(word, str):
+                List_level_0.append(word)
+        
+        # And if present row in the column == None
+            if isinstance(word, float):
+                New_column_0.append(List_level_0[-1])
+            else:
+                # If the last word is not == to None, then append the present word. 
+                New_column_0.append(word)
+    
+        # Drop old column and append new columne to dataframe. 
+        dataframe_reset_index.drop(['level_0'], axis = 1)
+        dataframe_reset_index['level_0'] = New_column_0
+        
+        # Iterate over the new dataframe 
+        for row in dataframe_reset_index.itertuples():
+            # Create a tuple of the bigram
+            Col_tuples = (row[1], row[2])
+            # Append the bigram tuple to our List. 
+            List_tuple_bigrams.append(Col_tuples)
+        
+        # Drop the individual columns. 
+        dataframe_reset_index = dataframe_reset_index.drop(['level_0', 'level_1'], axis = 1)
+        # Append the bigram column to the dataframe with a col name of 0. 
+        dataframe_reset_index[int('0')] = List_tuple_bigrams
+        dataframe_reset_index = dataframe_reset_index.sort_index(ascending = True, axis = 1)
+    
+    
+    # TRIGRAMS
+    
+    elif Ngrams == 'Trigrams':
+        
+        for word in dataframe_reset_index['level_0']:
+        # Append each word to the list. 
+            if isinstance(word, str):
+                List_level_0.append(word)
+        
+        # And if present row in the column == None
+            if isinstance(word, float):
+                New_column_0.append(List_level_0[-1])
+            else:
+                # If the last word is not == to None, then append the present word. 
+                New_column_0.append(word)
+        
+        # Append new column to the dataframe
+        dataframe_reset_index.drop(['level_0'], axis = 1)
+        dataframe_reset_index['level_0'] = New_column_0
+        
+        for word in dataframe_reset_index['level_1']:
+            # Append each word to the list. 
+                if isinstance(word, str):
+                    List_level_1.append(word)
+                    
+            # And if present row in the column == None
+                if isinstance(word, float):
+                    New_column_1.append(List_level_1[-1])
+                else:
+                    # If the last word is not == to None, then append the present word. 
+                    New_column_1.append(word)
+        
+        # Append new column to the dataframe
+        dataframe_reset_index.drop(['level_1'], axis = 1)
+        dataframe_reset_index['level_1'] = New_column_1
+    
+        # Creat a single column for the quadgram tuple and remove the old ones. 
+        for row in dataframe_reset_index.itertuples():
+            Col_tuples = (row[1], row[2], row[3])
+            List_tuple_quadgrams.append(Col_tuples)
+        
+        # Drop old columns
+        dataframe_reset_index = dataframe_reset_index.drop(['level_0', 'level_1', 'level_2'], axis = 1)
+        dataframe_reset_index[int('0')] = List_tuple_quadgrams            
+        dataframe_reset_index = dataframe_reset_index.sort_index(ascending = True, axis = 1)
+    
+    
+    # QUADGRAMS
+    
+    elif Ngrams == 'Quadgrams':
+        # Iterate over each row of the dataframe. 
+        for word in dataframe_reset_index['level_0']:
+        # Append each word to the list. 
+            if isinstance(word, str):
+                List_level_0.append(word)
+        
+        # And if present row in the column == None
+            if isinstance(word, float):
+                New_column_0.append(List_level_0[-1])
+            else:
+                # If the last word is not == to None, then append the present word. 
+                New_column_0.append(word)
+        
+        # Append new column to the dataframe
+        dataframe_reset_index.drop(['level_0'], axis = 1)
+        dataframe_reset_index['level_0'] = New_column_0
+        
+        for word in dataframe_reset_index['level_1']:
+            # Append each word to the list. 
+                if isinstance(word, str):
+                    List_level_1.append(word)
+                    
+            # And if present row in the column == None
+                if isinstance(word, float):
+                    New_column_1.append(List_level_1[-1])
+                else:
+                    # If the last word is not == to None, then append the present word. 
+                    New_column_1.append(word)
+        
+        # Append new column to the dataframe
+        dataframe_reset_index.drop(['level_1'], axis = 1)
+        dataframe_reset_index['level_1'] = New_column_1
 
+        for word in dataframe_reset_index['level_2']:
+            # Append each word to the list. 
+                if isinstance(word, str):
+                    List_level_2.append(word)
+                    
+            # And if present row in the column == None
+                if isinstance(word, float):
+                    New_column_2.append(List_level_2[-1])
+                else:
+                    # If the last word is not == to None, then append the present word. 
+                    New_column_2.append(word)
+        
+        # Append new column to the dataframe
+        dataframe_reset_index.drop(['level_2'], axis = 1)
+        dataframe_reset_index['level_2'] = New_column_2
+        
+        # Creat a single column for the quadgram tuple and remove the old ones. 
+        for row in dataframe_reset_index.itertuples():
+            Col_tuples = (row[1], row[2], row[3], row[4])
+            List_tuple_quadgrams.append(Col_tuples)
+                
+        dataframe_reset_index = dataframe_reset_index.drop(['level_0', 'level_1', 'level_2', 'level_3'], axis = 1)
+        dataframe_reset_index[int('0')] = List_tuple_quadgrams            
+        dataframe_reset_index = dataframe_reset_index.sort_index(ascending = True, axis = 1)
+    
+    
+    # Return the new column list to the user. 
+    return dataframe_reset_index
 
 
 # WRITE FILE TO EXCEL
 
-def write_to_excel(dataframe, filename):
-    import pandas as pd
+def write_to_excel(dataframe, location, filename):
+    os.chdir(location)
     writer = pd.ExcelWriter(filename+'.xlsx')
     dataframe.to_excel(writer, sheet_name = 'Data')
     writer.save()

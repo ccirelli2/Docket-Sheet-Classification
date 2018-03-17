@@ -207,8 +207,24 @@ def get_top_words(dataframe, methodology, Stage):
     return DF_TOP_WORDS
         
 
+### DEPRECATED CODE NO LONGER IN USE. 
 
+# DROP MEASURES OF CENTRAL TENDANCY THAT ARE APPENDED TO THE DATAFRAME IN OUR CODE.  
 
+def drop_measures_CT(dataframe_with_measures_CT, methodology_CT):
+    '''
+    The purpose of this function is to drop the columns that are being appended directly to the df_rename_col dataframe. 
+    '''
+    # Create a dataframe to capture the new df without these column headings. 
+    df_final = ''
+    
+    if methodology_CT == 'CalculationIII_Correlation_Coefficient':
+        df_final = dataframe_with_measures_CT.drop(['AVG', 'STDV', 'COCOEF'], axis = 1)
+     
+    else:
+        df_final = dataframe_with_measures_CT.drop(['AVG', 'STDV'], axis = 1)
+    
+    return df_final
 
 
 
