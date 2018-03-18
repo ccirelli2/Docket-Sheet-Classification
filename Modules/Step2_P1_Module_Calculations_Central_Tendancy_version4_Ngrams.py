@@ -52,11 +52,13 @@ def get_Measurements_CentralTendancy(dataframe, measurement):
     # Iterate over the rows in the FreqDist dataframe
     for row in dataframe.itertuples():
         
+        
         # CALCULATION I: HOME_BREW_STDV
         if measurement == 'CalculationI_homebrew_STDV':
             
             # Calculate Average using all of the rows
-            AVG = (sum(row[3:]) / len(row[3:]))                           # changing row[2:] to row[3:]
+            AVG = sum(row[3:]) / len(row[3:])                           # changing row[2:] to row[3:]
+                       
             # STDV_homebrew 
             STDV = (row[2] - AVG) * row[2]                                # changing row[1] to row[2]
              

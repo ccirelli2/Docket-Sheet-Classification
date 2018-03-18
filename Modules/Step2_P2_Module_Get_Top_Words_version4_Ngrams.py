@@ -2,6 +2,15 @@
 # IMPORT LIBRARIES
 import pandas as pd
 
+'''ADJUSTMENTS TO ACCOMODATE NGRAMS
+
+Index   = We can no longer refer to the index as the location for our Ngrams.  So when the function sorts on N calculation, the next step, 
+          which is to append N rows to our new dataframe, the target is no longer the index, where the 'words' used to reside, rather
+          column 0.  Therefore, all references to index to obtain our top words will need to be modified. 
+
+'''
+
+
 
 # FUNCTION TO LIMIT DATAFRAME BASED ON THE SELECTED METHODOLOGY 
 
@@ -11,7 +20,7 @@ def limit_dataframe(dataframe, methodology):
     Input     = Dataframe, value by which to limit the average. 
     Output    = Our dataframe limited. 
     '''
-    # Create an object to catch out limited dataframe. 
+    # Create an object to catch the limited dataframe. 
     df_limited = ''
     
     if methodology == 'Top5_highest_STDV_lowest_AVG':
@@ -97,15 +106,15 @@ def get_top_words(dataframe, methodology, Stage):
         # Sort Dataframe by STDV in descending order
         df_sorted = df_limited.sort_values(by = 'STDV', ascending = False)
         # Get first 15 rows
-        df_sorted_topFive = df_sorted.iloc[:15,]
-       
+        df_sorted_topNgrams = df_sorted.iloc[:15,]                                              # changed from df_sorted_top5
+            
         # Create New Dataframe Whose Index = 0-15
         df_final = pd.DataFrame({}, index = [x for x in range(0,15)])
         
         # Create a col in the new df to capture the top 15 words. 
-        df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
-        # Create a Column to Capture the STDV for each word.
-        df_final['Stage 1: STDV'] = [row for row in df_sorted_topFive['STDV']]
+        df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topNgrams['Ngrams']]    # changed from df_sorted_top5.index
+        # Create a Column to Capture the STDV for each word.       
+        df_final['Stage' + str(Stage) + ': ' + 'STDV'] = [row for row in df_sorted_topNgrams['STDV']]            # changed from df_sorted_top5
         # Assign the value of df_final to our DF_TOP_WORDS dataframe that will be returned to the user. 
         DF_TOP_WORDS = df_final
 
@@ -113,13 +122,15 @@ def get_top_words(dataframe, methodology, Stage):
         # Sort Dataframe by COCEOF in descending order
         df_sorted = df_limited.sort_values(by = 'COCOEF', ascending = False)
         # Get first 15 rows
-        df_sorted_topFive = df_sorted.iloc[:15,]
+        df_sorted_topNgrams = df_sorted.iloc[:15,]
+        
         # Create New Dataframe Whose Index = 0-15
         df_final = pd.DataFrame({}, index = [x for x in range(0,15)])
+        
         # Create a col in the new df to capture the top 15 words. 
-        df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
+        df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topNgrams['Ngrams']]
         # Create a Column to Capture the COCEOF for each word.
-        df_final['Stage 1: COCOEF'] = [row for row in df_sorted_topFive['COCOEF']]
+        df_final['Stage' + str(Stage) + ': ' + 'COCOEF'] = [row for row in df_sorted_topFive['COCOEF']]
         # Assign the value of df_final to our DF_TOP_WORDS dataframe that will be returned to the user. 
         DF_TOP_WORDS = df_final
     
@@ -133,9 +144,9 @@ def get_top_words(dataframe, methodology, Stage):
             # Create New Dataframe Whose Index = 0-4
             df_final = pd.DataFrame({}, index = [0,1,2,3,4])
             # Create a Column to capture the top 5 words. 
-            df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
+            df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topFive['Ngrams']]
             # Create a Column to Capture the STDV for each word.
-            df_final['Stage 1: STDV'] = [row for row in df_sorted_topFive['STDV']]
+            df_final['Stage' + str(Stage) + ': ' + 'STDV'] = [row for row in df_sorted_topFive['STDV']]
             DF_TOP_WORDS = df_final
         # Otherwise, we need to define the index of our new df as the length of the df_sorted.     
         else:
@@ -146,9 +157,9 @@ def get_top_words(dataframe, methodology, Stage):
             # Create New Dataframe Whose Index = 1-5
             df_final = pd.DataFrame({}, index = range(0,Range))
             # Create a Column to capture the top 5 words. 
-            df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
+            df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topFive['Ngrams']]
             # Create a Column to Capture the STDV for each word.
-            df_final['Stage 1: STDV'] = [row for row in df_sorted_topFive['STDV']]
+            df_final['Stage' + str(Stage) + ': ' + 'STDV'] = [row for row in df_sorted_topFive['STDV']]
             DF_TOP_WORDS = df_final
     
     elif methodology == 'Top5_highest_STDV_AVG_below_20prct':
@@ -161,9 +172,9 @@ def get_top_words(dataframe, methodology, Stage):
             # Create New Dataframe Whose Index = 0-4
             df_final = pd.DataFrame({}, index = [0,1,2,3,4])
             # Create a Column to capture the top 5 words. 
-            df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
+            df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topFive['Ngrams']]
             # Create a Column to Capture the STDV for each word.
-            df_final['Stage 1: STDV'] = [row for row in df_sorted_topFive['STDV']]
+            df_final['Stage' + str(Stage) + ': ' + 'STDV'] = [row for row in df_sorted_topFive['STDV']]
             DF_TOP_WORDS = df_final
         # Otherwise, we need to define the index of our new df as the length of the df_sorted. 
         else:
@@ -172,9 +183,9 @@ def get_top_words(dataframe, methodology, Stage):
             # Create New Dataframe Whose Index = 1-5
             df_final = pd.DataFrame({}, index = range(0,Range))
             # Create a Column to capture the top 5 words. 
-            df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
+            df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topFive['Ngrams']]
             # Create a Column to Capture the STDV for each word.
-            df_final['Stage 1: STDV'] = [row for row in df_sorted_topFive['STDV']]
+            df_final['Stage' + str(Stage) + ': ' + 'STDV'] = [row for row in df_sorted_topFive['STDV']]
             DF_TOP_WORDS = df_final
             
     elif methodology == 'Top5_lowest_STDV_highest_AVG':
@@ -185,9 +196,9 @@ def get_top_words(dataframe, methodology, Stage):
         # Create New Dataframe Whose Index = 0-4
         df_final = pd.DataFrame({}, index = [0,1,2,3,4])
         # Create a Column to capture the top 5 words. 
-        df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
+        df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topFive['Ngrams']]
         # Create a Column to Capture the STDV for each word.
-        df_final['Stage 1: STDV'] = [row for row in df_sorted_topFive['STDV']]
+        df_final['Stage' + str(Stage) + ': ' + 'STDV'] = [row for row in df_sorted_topFive['STDV']]
         DF_TOP_WORDS = df_final
     
     elif methodology == 'Top5_lowest_COCOEF_highest_AVG':
@@ -198,9 +209,9 @@ def get_top_words(dataframe, methodology, Stage):
         # Create New Dataframe Whose Index = 0-4
         df_final = pd.DataFrame({}, index = [0,1,2,3,4])
         # Create a Column to capture the top 5 words. 
-        df_final['Life Cycle Stage: '+str(Stage)] = df_sorted_topFive.index
-        # Create a Column to Capture the STDV for each word.
-        df_final['Stage 1: COCOEF'] = [row for row in df_sorted_topFive['COCOEF']]
+        df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topFive['Ngrams']]    #** We can no longer refer to index as 
+        # Create a Column to Capture the STDV for each word.                                    # the place where our Ngrams reside. 
+        df_final['Stage' + str(Stage) + ': ' + 'COCOEF'] = [row for row in df_sorted_topFive['COCOEF']]              # it must be col[0]
         DF_TOP_WORDS = df_final      
             
     # Return to the user the dataframe with top word selection
