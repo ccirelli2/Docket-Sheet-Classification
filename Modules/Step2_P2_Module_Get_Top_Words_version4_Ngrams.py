@@ -130,7 +130,7 @@ def get_top_words(dataframe, methodology, Stage):
         # Create a col in the new df to capture the top 15 words. 
         df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topNgrams['Ngrams']]
         # Create a Column to Capture the COCEOF for each word.
-        df_final['Stage' + str(Stage) + ': ' + 'COCOEF'] = [row for row in df_sorted_topFive['COCOEF']]
+        df_final['Stage' + str(Stage) + ': ' + 'COCOEF'] = [row for row in df_sorted_topNgrams['COCOEF']]
         # Assign the value of df_final to our DF_TOP_WORDS dataframe that will be returned to the user. 
         DF_TOP_WORDS = df_final
     

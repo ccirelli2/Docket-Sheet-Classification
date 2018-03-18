@@ -12,6 +12,7 @@ def get_Measurements_CentralTendancy(dataframe, measurement):
     '''
     Calculation_I:
         Input       = 'CalculationI_homebrew_STDV'
+        Constraints = Not set up to work with COCOEF
         Description = 
         AVG         = Average value for all rows (including zeros)
         STDV        = Is our Target_Freq minus our average * Target_Freq.  This will decrease our target by both the average 
@@ -21,6 +22,7 @@ def get_Measurements_CentralTendancy(dataframe, measurement):
                       the bottom of our list. 
     Calculation_II:
         Input       = 'CalculationII_AVG_not_zero'
+        Constraints = Not set up to work with COCOEF
         Description = The purpose of this approach is to try to generate higher averages by focusing only on the non-zero
                       values.  This will ensure that a single value (other than our target) that has a very high freq does
                       not get overlooked by our model by dividing it by the total length of the row (10 in this case). 
@@ -29,6 +31,7 @@ def get_Measurements_CentralTendancy(dataframe, measurement):
     
     Calculation_III:  
         Input       = 'CalculationIII_Correlation_Coefficient'
+        Constraints = Not set up to work with any of the STDV calculations
         Description = Calculate teh correlation coefficient as our target variable to identify key words. Note that this
                       approach will not yeild negative numbers, so we should only capture one list of values in descending
                       order with the highest COCEF values. 
