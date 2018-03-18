@@ -43,7 +43,7 @@ def limit_dataframe(dataframe, methodology):
         delimiter = dataframe['COCOEF'] < .10
         df_limited = dataframe[delimiter]
         
-    elif methodology == 'Top15_highest_COCOEF' or methodology == 'Top15_highest_STDV_homebrew' :
+    elif methodology == 'Top15_highest_COCOEF' or methodology == 'Top15_highest_STDV' :
         # If this methodology is selected, do nothing. 
         df_limited = dataframe
     
@@ -58,7 +58,7 @@ def limit_dataframe(dataframe, methodology):
 def get_top_words(dataframe, methodology, Stage):
     '''
     Methodology_I:
-    Input         = 'Top15_highest_STDV_homebrew', 
+    Input         = 'Top15_highest_STDV', 
                     get_Measurements_CentralTendancy == 'CalculationI_homebrew_STDV' or 'CalculationII_AVG_not_zero'
     Description   = Obtain the 15 words with the highest STDV using our Homebrew calculation. 
     Operations    = Sort STDV column in descending order, return to the user the top 10 words for our target var. 
@@ -102,7 +102,7 @@ def get_top_words(dataframe, methodology, Stage):
     
     # STEP2:  GET TOP WORDS
     
-    if methodology == 'Top15_highest_STDV_homebrew':
+    if methodology == 'Top15_highest_STDV':
         # Sort Dataframe by STDV in descending order
         df_sorted = df_limited.sort_values(by = 'STDV', ascending = False)
         # Get first 15 rows
