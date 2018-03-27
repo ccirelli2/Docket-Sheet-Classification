@@ -12,20 +12,33 @@ from nltk import corpus
 
 # IMPORT TARGET FILE / DELIMIT ROWS / REMOVE ROWS PERIOD = NONE
 
-def import_docket_sheet_file(Excel_file):
+def format_docket_sheet_file(dataframe):
     '''
     Input      = None
     Operations = Read file, select columns, eliminate time-period = None
     Return     = dataframe. 
     '''
-    # Read in Excel File
-    df_docket_sheets = pd.read_excel(Excel_file)
-    # Select columns
-    df_docket_sheets_fit = df_docket_sheets.iloc[:,0:-1]
+    # Limit Columns
+    df_docket_sheets_fit = dataframe.iloc[:,0:-1]
     # Select rows != None
     TimePeriod_notNone = df_docket_sheets_fit['Time Period'] > 0
     # Return dataframe
     return df_docket_sheets_fit[TimePeriod_notNone]
+
+# GET KEY WORDS FROM FILE
+
+def get_set_KeyWords_from_file(File):
+    # Read file in as a dataframe
+    df = pd.read_excel(File)
+    # List of key words
+    List = []
+    # Iterate over dataframe columns
+    for col in df.columns:
+        for ngram in df[col]:
+            if isinstance(ngram, str):
+                List.append(ngram)
+    return List   
+
 
 
 # CREATE A SET OF ALL HUMAN NAMES FROM THE NLTK CORPUS LIBRARY
@@ -76,8 +89,7 @@ def clean_andTokenize_text(Text_file):
     # a set function, which is better used outside the function if need be. 
     return Text_stem
 
-
-# TURN CLEAN TOKENIZED TEXT INTO NGRAMS
+# CODE TO CREATE NGRAMS
 
 def get_Ngrams(Clean_tokenized_text, Ngram_selection):
     # Create a list to capture Ngrams
@@ -105,24 +117,39 @@ def get_Ngrams(Clean_tokenized_text, Ngram_selection):
     # Return Ngrams list
     return List_Ngrams
 
+# TURN CLEAN TOKENIZED TEXT INTO NGRAMS
 
-# STEP 3: CREATE NGRAMS OF DOCKETSHEET ENTRIES
-
-def get_docketsheet_ngrams(Tokenized_text):
+def get_docketsheet_ngrams(Tokenized_text, File):
+    '''
+    Input      = a.) Tokenized Text, b.) Filename from which the key words are being sourced. 
+    Operations = a.) Create an object to capture our Ngrams generated from the ngram function, 
+                 b.) Use the filename to determine whether the ngrams within are No, Bi, Tri or Quadgrams. 
+                     If no match is found, return statement to the user that a file not specifying the type of ngrams
+                     has been passed to the function. 
+                 e.) Generate the ngrams and populate the Ngrams_text object. 
+    Output     = The docketsheet entry converted into the appropriate Ngrams. 
+    '''   
     # Define the object Ngrams_text as an empty string
     Ngrams_text = ''
     # Check the length of the first key word in our Dict
-    if len(DictKeyWords.values()[0]) == 1:
-    # Use our get_Ngrams function to create the Ngrams.
-        Ngrams_text = stp1.get_Ngrams(clean_tokenize_row, 'Nograms')
-    elif len(Dict_key_words[key][0]) == 2:
-        Ngrams_text = stp1.get_Ngrams(clean_tokenize_row, 'Bigrams')
-    elif len(Dict_key_words[key][0]) == 3:
-        Ngrams_text = stp1.get_Ngrams(clean_tokenize_row, 'Trigrams')
-    elif len(Dict_key_words[key][0]) == 4:
-        Ngrams_text = stp1.get_Ngrams(clean_tokenize_row, 'Quadgrams')
+    if 'Nograms' in File:
+        Ngrams_text = get_Ngrams(Tokenized_text, 'Nograms')
+    elif 'Bigrams' in File:
+        Ngrams_text = get_Ngrams(Tokenized_text, 'Bigrams')
+    elif 'Trigrams' in File:
+        Ngrams_text = get_Ngrams(Tokenized_text, 'Trigrams')
+    elif 'Quadgrams' in File:
+        Ngrams_text = get_Ngrams(Tokenized_text, 'Quadgrams')
+    else:
+        print('''Please be advised that a filename was passed to the functon that does not specify what type
+                of Ngrams are contained within''')
+    
     # Return to the user the Ngram_text
     return Ngrams_text
+
+
+# STEP 3: CREATE NGRAMS OF DOCKETSHEET ENTRIES
+
 
 
 
@@ -169,7 +196,7 @@ def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, List_DictKeyWords):
         clean_tokenize_row = clean_andTokenize_text(row[4])                
             
         # Once the text of the row is tokenized, we need to create the Ngrams
-        docketsheet_ngrams = get_docketsheet_ngrams(clean_tokenize_row)
+        docketsheet_ngrams = get_docketsheet_ngrams(clean_tokenize_row, List_DictKeyWords)
             
         # So iterate every word in key_word_list for each rows 
         for Ngram in List_DictKeyWords:
@@ -193,194 +220,6 @@ def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, List_DictKeyWords):
     return df_DAT
             
 
-# FUNCTION TO CREATE AN NGRAM COLUMN
-    
-def create_Ngram_column(dataframe, Ngrams):
-    '''
-    Purpose:    The purpose of this code is to:
-                1.) to adjust our dataframe to account for the fact that the pandas multiindex merges the 
-                cells that contain the same words.     
-                2.) Create a single column that includes a tuple of the Ngrams.
-                3.) Remove the old columns. 
-                
-    Input:      Output from our FreqDist function
-    Output:     The same dataframe but withou the individual word columns, which is replaced with a single column 
-                representing our Ngrams. 
-    '''
-    
-    
-    
-    
-    
-    # Create lists to capture each word in the target column. 
-    List_level_0 = []
-    List_level_1 = []
-    List_level_2 = []
-    
-    # Create a list to capture our new column where where the none values are converted to the last actual word.
-    New_column_0 = []
-    New_column_1 = []
-    New_column_2 = []
-    
-    # Lists to capture tuples
-    List_tuple_bigrams = []
-    List_tuple_trigrams = []
-    List_tuple_quadgrams = []
-
-    
-    # Reset the index
-    dataframe_reset_index = dataframe.reset_index()
-    
-    # For each word in the target column
-    
-    if Ngrams == 'Nograms':
-        print('Because you selected Nograms, no adjustment is required.', 'Function is returning the original dataframe.','\n', '\n')
-        
-        
-    # BIGRAMS
-    
-    elif Ngrams == 'Bigrams':
-        for word in dataframe_reset_index['level_0']:
-        # Append each word to the list. 
-            if isinstance(word, str):
-                List_level_0.append(word)
-        
-        # And if present row in the column == None
-            if isinstance(word, float):
-                New_column_0.append(List_level_0[-1])
-            else:
-                # If the last word is not == to None, then append the present word. 
-                New_column_0.append(word)
-    
-        # Drop old column and append new columne to dataframe. 
-        dataframe_reset_index.drop(['level_0'], axis = 1)
-        dataframe_reset_index['level_0'] = New_column_0
-        
-        # Iterate over the new dataframe 
-        for row in dataframe_reset_index.itertuples():
-            # Create a tuple of the bigram
-            Col_tuples = (row[1], row[2])
-            # Append the bigram tuple to our List. 
-            List_tuple_bigrams.append(Col_tuples)
-        
-        # Drop the individual columns. 
-        dataframe_reset_index = dataframe_reset_index.drop(['level_0', 'level_1'], axis = 1)
-        # Append the bigram column to the dataframe with a col name of 0. 
-        dataframe_reset_index[int('0')] = List_tuple_bigrams
-        dataframe_reset_index = dataframe_reset_index.sort_index(ascending = True, axis = 1)
-    
-    
-    # TRIGRAMS
-    
-    elif Ngrams == 'Trigrams':
-        
-        for word in dataframe_reset_index['level_0']:
-        # Append each word to the list. 
-            if isinstance(word, str):
-                List_level_0.append(word)
-        
-        # And if present row in the column == None
-            if isinstance(word, float):
-                New_column_0.append(List_level_0[-1])
-            else:
-                # If the last word is not == to None, then append the present word. 
-                New_column_0.append(word)
-        
-        # Append new column to the dataframe
-        dataframe_reset_index.drop(['level_0'], axis = 1)
-        dataframe_reset_index['level_0'] = New_column_0
-        
-        for word in dataframe_reset_index['level_1']:
-            # Append each word to the list. 
-                if isinstance(word, str):
-                    List_level_1.append(word)
-                    
-            # And if present row in the column == None
-                if isinstance(word, float):
-                    New_column_1.append(List_level_1[-1])
-                else:
-                    # If the last word is not == to None, then append the present word. 
-                    New_column_1.append(word)
-        
-        # Append new column to the dataframe
-        dataframe_reset_index.drop(['level_1'], axis = 1)
-        dataframe_reset_index['level_1'] = New_column_1
-    
-        # Creat a single column for the quadgram tuple and remove the old ones. 
-        for row in dataframe_reset_index.itertuples():
-            Col_tuples = (row[1], row[2], row[3])
-            List_tuple_quadgrams.append(Col_tuples)
-        
-        # Drop old columns
-        dataframe_reset_index = dataframe_reset_index.drop(['level_0', 'level_1', 'level_2'], axis = 1)
-        dataframe_reset_index[int('0')] = List_tuple_quadgrams            
-        dataframe_reset_index = dataframe_reset_index.sort_index(ascending = True, axis = 1)
-    
-    
-    # QUADGRAMS
-    
-    elif Ngrams == 'Quadgrams':
-        # Iterate over each row of the dataframe. 
-        for word in dataframe_reset_index['level_0']:
-        # Append each word to the list. 
-            if isinstance(word, str):
-                List_level_0.append(word)
-        
-        # And if present row in the column == None
-            if isinstance(word, float):
-                New_column_0.append(List_level_0[-1])
-            else:
-                # If the last word is not == to None, then append the present word. 
-                New_column_0.append(word)
-        
-        # Append new column to the dataframe
-        dataframe_reset_index.drop(['level_0'], axis = 1)
-        dataframe_reset_index['level_0'] = New_column_0
-        
-        for word in dataframe_reset_index['level_1']:
-            # Append each word to the list. 
-                if isinstance(word, str):
-                    List_level_1.append(word)
-                    
-            # And if present row in the column == None
-                if isinstance(word, float):
-                    New_column_1.append(List_level_1[-1])
-                else:
-                    # If the last word is not == to None, then append the present word. 
-                    New_column_1.append(word)
-        
-        # Append new column to the dataframe
-        dataframe_reset_index.drop(['level_1'], axis = 1)
-        dataframe_reset_index['level_1'] = New_column_1
-
-        for word in dataframe_reset_index['level_2']:
-            # Append each word to the list. 
-                if isinstance(word, str):
-                    List_level_2.append(word)
-                    
-            # And if present row in the column == None
-                if isinstance(word, float):
-                    New_column_2.append(List_level_2[-1])
-                else:
-                    # If the last word is not == to None, then append the present word. 
-                    New_column_2.append(word)
-        
-        # Append new column to the dataframe
-        dataframe_reset_index.drop(['level_2'], axis = 1)
-        dataframe_reset_index['level_2'] = New_column_2
-        
-        # Creat a single column for the quadgram tuple and remove the old ones. 
-        for row in dataframe_reset_index.itertuples():
-            Col_tuples = (row[1], row[2], row[3], row[4])
-            List_tuple_quadgrams.append(Col_tuples)
-                
-        dataframe_reset_index = dataframe_reset_index.drop(['level_0', 'level_1', 'level_2', 'level_3'], axis = 1)
-        dataframe_reset_index[int('0')] = List_tuple_quadgrams            
-        dataframe_reset_index = dataframe_reset_index.sort_index(ascending = True, axis = 1)
-    
-    
-    # Return the new column list to the user. 
-    return dataframe_reset_index
 
 
 # WRITE FILE TO EXCEL
