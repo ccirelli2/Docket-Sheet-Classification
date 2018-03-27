@@ -34,10 +34,29 @@ def get_set_KeyWords_from_file(File):
     List = []
     # Iterate over dataframe columns
     for col in df.columns:
+        # Iterate over each ngram in each column
         for ngram in df[col]:
+            # Exclude None Values. 
             if isinstance(ngram, str):
-                List.append(ngram)
-    return List   
+                    # Create Tuples depending on the type of Ngrams. 
+                    if 'Nograms' in File:
+                        List.append(ngram)
+                    elif 'Bigrams' in File:
+                        # Split on the quotes. 
+                        ngram_split = ngram.split('\'')
+                        # Create a tuple from the words. 
+                        Tuple = (ngram_split[1], ngram_split[3])
+                        List.append(Tuple)
+                    elif 'Trigrams' in File:
+                        ngram_split = ngram.split('\'')
+                        Tuple = (ngram_split[1], ngram_split[3], ngram_split[5])
+                        List.append(Tuple)
+                    elif 'Quadgrams' in File:
+                        ngram_split = ngram.split('\'')
+                        Tuple = (ngram_split[1], ngram_split[3], ngram_split[5], ngram_split[7])
+                        List.append(Tuple)  
+    # Return a set to the user.
+    return set(List)
 
 
 
@@ -148,20 +167,26 @@ def get_docketsheet_ngrams(Tokenized_text, File):
     return Ngrams_text
 
 
-# STEP 3: CREATE NGRAMS OF DOCKETSHEET ENTRIES
+# WRITE FILE TO EXCEL
+
+def write_to_excel(dataframe, location, filename):
+    os.chdir(location)
+    writer = pd.ExcelWriter(filename+'.xlsx')
+    dataframe.to_excel(writer, sheet_name = 'Data')
+    writer.save()
 
 
+# CODE GET KEY WORD APPEARANCE IN DOCKET SHEET ENTRIES
 
-
-# CODE TO OBTAIN KEY WORD APPEARANCE FOR DOCKETSHEETS 
-
-def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, List_DictKeyWords):
+def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, File, 
+                                             Write2Excel = False, Destination_location = None, 
+                                            Transpose4mlModel = False):
     '''
     Purpose     = The purpose of this code is to generate a dataframe whose rows are the docketsheet entries, columns
                   the key ngrams and the values the appearance of these ngrams in each docketsheet entry. 
     Input       = 1.) A dataframe representing the docketsheet limited to only those applicable rows and columns. 
-                  2.) A single list of key words.  You may input a single list or loop over multiple lists of key words. 
-                      The important point is that the object must be input as a list. 
+                  2.) A file containing the list of key words for a particular calculation + methodology
+                      combination.  
     Operations  = 1.) Create a dataframe to house the rows and columns 
                   2.) Since the names of each docketsheet entry do not indicate their position in the dataframe, create
                       and object to keep the count of the num of rows that we iterate over, which will later be used in
@@ -176,16 +201,24 @@ def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, List_DictKeyWords):
                   9.) Append the row to our dataframe. 
     
     '''
-    
+    # Print Progress Report 1
+    print('Working on key-word appearance for file =>', File ,'\n')
+        
+    # Format Docketsheet (rows / columns)
+    Docketsheet_formated = format_docket_sheet_file(Docketsheet)
+        
+    # Get Key Words From File
+    Set_key_words = get_set_KeyWords_from_file(File)
+        
     # Create New Dataframe
-    df_DAT = pd.DataFrame({}, index = List_DictKeyWords)
+    df_DAT = pd.DataFrame({}, index = Set_key_words)
     
     # Count of Rows
     Count = 0
     
     # Iterate over row of the docketsheet df as an enumerated tuple. 
-    for row in Docketsheet.itertuples():
-
+    for row in Docketsheet_formated.itertuples():
+        
         # Star the Count of the rows
         Count += 1
         
@@ -196,17 +229,17 @@ def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, List_DictKeyWords):
         clean_tokenize_row = clean_andTokenize_text(row[4])                
             
         # Once the text of the row is tokenized, we need to create the Ngrams
-        docketsheet_ngrams = get_docketsheet_ngrams(clean_tokenize_row, List_DictKeyWords)
-            
+        docketsheet_ngrams = get_docketsheet_ngrams(clean_tokenize_row, File)
+        
         # So iterate every word in key_word_list for each rows 
-        for Ngram in List_DictKeyWords:
-            
-            # Check to see if the word is in the clean text
+        for Ngram in Set_key_words:
+
+            #Check to see if the word is in the clean text
             if Ngram in docketsheet_ngrams:
                 # If there is a match, append 1 to the list
                 List_word_matches_single_row.append(1)
             else: 
-                # If not, append 0
+            # If not, append 0
                 List_word_matches_single_row.append(0)
         
         # Create a string from the counter to add to your column name. 
@@ -215,22 +248,37 @@ def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, List_DictKeyWords):
         # Create a column in your new datafrmae to capture the case number and list of matches. 
         df_DAT[Row_num + row[1] + ' ' + str(row[2])] = List_word_matches_single_row        
 
-        # Return our dataframe w/ an index as the list of key words, columns as each case. 
+    if Transpose4mlModel == True:
+        df_final = df_DAT.transpose()
+        List_Life_Cycles = [x for x in Docketsheet_formated['Time Period']]
+        df_final['Life Cycle Stage'] = List_Life_Cycles
+        
+        # Write to Excel
+        if Write2Excel == True:
+            print('Writing dataframe to Excel')
+            os.chdir(Destination_location)
+            File_name = 'DocketSheet_WordMatches' + '_' + File
+            print('File name => ' + File_name)
+            write_to_excel(df_final, Destination_location, File_name)
+            print('Your file has been saved to:  ', Destination_location, '\n', '\n')
+         # Otherwise, return the dataframe to the user.    
+        else:
+            return df_final
     
-    return df_DAT
-            
-
-
-
-# WRITE FILE TO EXCEL
-
-def write_to_excel(dataframe, location, filename):
-    os.chdir(location)
-    writer = pd.ExcelWriter(filename+'.xlsx')
-    dataframe.to_excel(writer, sheet_name = 'Data')
-    writer.save()
-
-
+    else:
+        # Write to Excel
+        if Write2Excel == True:
+            print('Writing dataframe to Excel')
+            os.chdir(Destination_location)
+            File_name = 'DocketSheet_WordMatches' + '_' + File
+            print('File name => ' + File_name, '\n')
+            write_to_excel(df_DAT, Destination_location, File_name)
+            print('Your file has been saved to:  ', Destination_location, '\n')
+        # Otherwise, return the dataframe to the user.    
+        else:
+            return df_DAT
+    
+    # BREAK
 
 
 
