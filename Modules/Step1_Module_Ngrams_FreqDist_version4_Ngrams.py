@@ -202,7 +202,7 @@ def create_Ngram_column(dataframe, Ngrams):
     # For each word in the target column
     
     if Ngrams == 'Nograms':
-        print('Because you selected Nograms, no adjustment is required.', 'Function is returning the original dataframe.','\n', '\n')
+        dataframe_reset_index = dataframe_reset_index.rename(index = str, columns = {'index': 0})  
         
         
     # BIGRAMS
