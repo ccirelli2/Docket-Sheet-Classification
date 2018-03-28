@@ -43,9 +43,13 @@ def limit_dataframe(dataframe, methodology):
         delimiter = dataframe['COCOEF'] < .10
         df_limited = dataframe[delimiter]
         
-    elif methodology == 'Top15_highest_COCOEF' or methodology == 'Top15_highest_STDV' :
+    elif methodology == 'Top15_highest_COCOEF' or methodology == 'Top15_highest_STDV':
         # If this methodology is selected, do nothing. 
-        df_limited = dataframe
+        # Added 03.28.2018
+        delimiter = dataframe.iloc[:,1] > .10     # changed to .10 on 03.28.2018
+        df_limited = dataframe[delimiter]
+        
+        #df_limited = dataframe  * commented out due to the testing of the above change. 
     
     # Return our limited dataframe to the user. 
     return df_limited
@@ -107,30 +111,39 @@ def get_top_words(dataframe, methodology, Stage):
     df_limited = limit_dataframe(dataframe, methodology)
     
     # STEP2:  GET TOP WORDS
+      
     if methodology == 'Top15_highest_STDV':
         # Sort Dataframe by STDV in descending order
         df_sorted = df_limited.sort_values(by = 'STDV', ascending = False)
         # Get first 15 rows
-        df_sorted_topNgrams = df_sorted.iloc[:15,]                                          # changed from df_sorted_top5
-                
-        # Create New Dataframe Whose Index = 0-15
-        df_final = pd.DataFrame({}, index = [x for x in range(0,15)])
+        # Amendment:  changed to top 30 from 15 on 03.28.2018
+        df_sorted_topNgrams = df_sorted.iloc[:30,] 
         
+        # Create New Dataframe Whose Index = 0-15
+        # Amendment:  amended range to len of df_sorted_topNgrams 03.28.2019
+        df_final = pd.DataFrame({}, index = [x for x in range(0,len(df_sorted_topNgrams))]) 
+                
         # Create a col in the new df to capture the top 15 words. 
-        df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topNgrams['Ngrams']]    # changed from df_sorted_top5.index
+        # amendment:  changed from df_sorted_top5.index to 'Ngram's.  In the jupyter code we change the first column from 
+                     # whatever it used to be to 'Ngrams' and that is how we reference the col here.  Its our target col. 
+        df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topNgrams['Ngrams']]    
         # Create a Column to Capture the STDV for each word.       
-        df_final['Stage' + str(Stage) + ': ' + 'STDV'] = [row for row in df_sorted_topNgrams['STDV']]     # changed from df_sorted_top5
+        # Amendment:  changed from df_sorted_top5
+        df_final['Stage' + str(Stage) + ': ' + 'STDV'] = [row for row in df_sorted_topNgrams['STDV']]     
         # Assign the value of df_final to our DF_TOP_WORDS dataframe that will be returned to the user. 
         DF_TOP_WORDS = df_final
 
     elif methodology == 'Top15_highest_COCOEF':
         # Sort Dataframe by COCEOF in descending order
         df_sorted = df_limited.sort_values(by = 'COCOEF', ascending = False)
+                
         # Get first 15 rows
-        df_sorted_topNgrams = df_sorted.iloc[:15,]
+        #  Amendment:  changed from 15 to 30 on 03.28.2018. 
+        df_sorted_topNgrams = df_sorted.iloc[:30,]
         
         # Create New Dataframe Whose Index = 0-15
-        df_final = pd.DataFrame({}, index = [x for x in range(0,15)])
+        #  Amendment:  changed the range from 0,15 to 0,len(df_sorted_topNgrams. 
+        df_final = pd.DataFrame({}, index = [x for x in range(0,len(df_sorted_topNgrams))])
         
         # Create a col in the new df to capture the top 15 words. 
         df_final['Life Cycle Stage: '+str(Stage)] = [x for x in df_sorted_topNgrams['Ngrams']]
