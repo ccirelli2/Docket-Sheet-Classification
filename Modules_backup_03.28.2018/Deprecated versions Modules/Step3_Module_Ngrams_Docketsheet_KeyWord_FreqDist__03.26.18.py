@@ -19,8 +19,7 @@ def format_docket_sheet_file(dataframe):
     Return     = dataframe. 
     '''
     # Limit Columns
-    df = pd.read_excel(dataframe)  # Amendment 03.28.2018: Change this as its not actually a dataframe, but a file. 
-    df_docket_sheets_fit = df.iloc[:,0:-1]
+    df_docket_sheets_fit = dataframe.iloc[:,0:-1]
     # Select rows != None
     TimePeriod_notNone = df_docket_sheets_fit['Time Period'] > 0
     # Return dataframe
@@ -30,44 +29,29 @@ def format_docket_sheet_file(dataframe):
 
 def get_set_KeyWords_from_file(File):
     # Read file in as a dataframe
-    df = File                   # Amended 03.28.2018.  Since we are creating a master pipeline, we are now passing a
-                                # pandas dataframe where as before it was a file.  We should add an if elif statement here
-                                # so that in the future we can still use the separated code. 
-                                # used to be df = pd.read_excel(File), now df = File, which is actuall a dataframe. 
-   
-
-
+    df = pd.read_excel(File)
     # List of key words
     List = []
     # Iterate over dataframe columns
     for col in df.columns:
-        
         # Iterate over each ngram in each column
         for ngram in df[col]:
             # Exclude None Values. 
             if isinstance(ngram, str):
-                    # Create Tuples depending on the type of Ngrams.
-                    # Amendment 03.28.2018:   We can no longer use the approach - if 'Nograms' in File as we are no longer
-                    #                         dealing with the file names.  So we will use a diff approch here.
-                    
-                    # New Approach: Take the first Ngram from the dataframe, split on the space and take the length. 
-                    Ngram_0 = File.iloc[0,0]
-                    Ngram_split = Ngram_0.split(' ')
-    
-                    # Check the length of the first key word in our Dict
-                    if len(Ngram_split) == 1:
+                    # Create Tuples depending on the type of Ngrams. 
+                    if 'Nograms' in File:
                         List.append(ngram)
-                    elif len(Ngram_split) == 2:
+                    elif 'Bigrams' in File:
                         # Split on the quotes. 
                         ngram_split = ngram.split('\'')
                         # Create a tuple from the words. 
                         Tuple = (ngram_split[1], ngram_split[3])
                         List.append(Tuple)
-                    elif len(Ngram_split) == 3:
+                    elif 'Trigrams' in File:
                         ngram_split = ngram.split('\'')
                         Tuple = (ngram_split[1], ngram_split[3], ngram_split[5])
                         List.append(Tuple)
-                    elif len(Ngram_split) == 4:
+                    elif 'Quadgrams' in File:
                         ngram_split = ngram.split('\'')
                         Tuple = (ngram_split[1], ngram_split[3], ngram_split[5], ngram_split[7])
                         List.append(Tuple)  
@@ -165,19 +149,15 @@ def get_docketsheet_ngrams(Tokenized_text, File):
     Output     = The docketsheet entry converted into the appropriate Ngrams. 
     '''   
     # Define the object Ngrams_text as an empty string
-    Ngrams_text = '' # Deprecated
-    
-    Ngram_0 = File.iloc[0,0]
-    Ngram_split = Ngram_0.split(' ')
-    
+    Ngrams_text = ''
     # Check the length of the first key word in our Dict
-    if len(Ngram_split) == 1:
+    if 'Nograms' in File:
         Ngrams_text = get_Ngrams(Tokenized_text, 'Nograms')
-    elif len(Ngram_split) == 2:
+    elif 'Bigrams' in File:
         Ngrams_text = get_Ngrams(Tokenized_text, 'Bigrams')
-    elif len(Ngram_split) == 3:
+    elif 'Trigrams' in File:
         Ngrams_text = get_Ngrams(Tokenized_text, 'Trigrams')
-    elif len(Ngram_split) == 4:
+    elif 'Quadgrams' in File:
         Ngrams_text = get_Ngrams(Tokenized_text, 'Quadgrams')
     else:
         print('''Please be advised that the following file was passed to the functon that does not specify what type
@@ -199,8 +179,8 @@ def write_to_excel(dataframe, location, filename):
 # CODE GET KEY WORD APPEARANCE IN DOCKET SHEET ENTRIES
 
 def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, File, 
-                                             Write2Excel, Destination_location, 
-                                            Transpose4mlModel):
+                                             Write2Excel = False, Destination_location = None, 
+                                            Transpose4mlModel = False):
     '''
     Purpose     = The purpose of this code is to generate a dataframe whose rows are the docketsheet entries, columns
                   the key ngrams and the values the appearance of these ngrams in each docketsheet entry. 
@@ -221,7 +201,9 @@ def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, File,
                   9.) Append the row to our dataframe. 
     
     '''
-             
+    # Print Progress Report 1
+    print('Working on key-word appearance for file =>', File ,'\n')
+        
     # Format Docketsheet (rows / columns)
     Docketsheet_formated = format_docket_sheet_file(Docketsheet)
         
@@ -301,77 +283,9 @@ def get_KeyWordAppearance_DocketsheetEntries(Docketsheet, File,
 
 
 
-# STEP3: FINAL CODE GET KEY WORD APPEARANCE IN THE DOCKETSHEET. 
 
-def get_DocketSheet_KeyWord_Appearance_Master(stp3_Docketsheet, 
-                                              stp3_DirNgramLoc, 
-                                              stp3_Iterable,
-                                              stp3_Target_file, 
-                                              stp3_KeyPhrase,
-                                              stp3_Destination_location, 
-                                              stp3_Transpose4mlModel, 
-                                              stp3_Write2Excel):
-    '''Documentation
-    Input      = i.)   Docketsheet:  the original docketsheet with pre-classified entries. 
-                 ii.)  DirNgramLoc:  The location where our KeyWordSelection files have been saved. 
-                 iii.) Iterable:     If we plan to iterate over a list of files or just use one file. 
-                 iv.)  Target_file:  If Iterable is False, then we need to specify the singular file for 
-                                     which we would like generate the Docketsheet key word appearance 
-                                     dataframe.
-                 v.)   KeyPhase:     Rather than read the data from each file of KeyWords to identify the
-                                     Ngram type, and because we have a uniform approach to defining our 
-                                     KeyWord Excel files that specify the Ngram, we use the title to determine
-                                     which type of Ngram we are dealing with. 
-                 vi.)  Destination_loc
-                                     Where we would like to write the excel file to.
-                 vii.) Transpose     Whether or not we want to transpose the dataframe.  Note that this 
-                                     will need to be done for any dataframes that the user plans to feed 
-                                     into the machine learning algorithms. 
-                 viii.)Write2Excel   Whether the user wants to write to Excel or return the dataframe in 
-                                     memory. 
-    
-    KeyPhrase  = Chose the key phrase in the file name that will limit the files that are use in the code. 
-                 Example:  Use 'Bigrams' to only obtain results for those files using Bigrams, 
-                           or 'Avg_not_zero for files using that methodology. 
-    
-    '''
-    
-    
-    # Obtain Word Appearance for All Files In Dir
-    if stp3_Iterable == True:
-        # Change directory to where the Ngram Key Words are saved
-        os.chdir(stp3_DirNgramLoc)
-        # Obtain Files
-        List_files = [file for file in os.listdir() if stp3_KeyPhrase in file]
-        
-        
-        # Loop over directory of files
-        for file in List_files:
-                # Change directory back to where our files are saved. 
-                os.chdir(stp3_DirNgramLoc)
-                
-                # Run Algorithm to obtain KeyWordAppearance. 
-                DocketSheet_KeyWord_Appearance = get_KeyWordAppearance_DocketsheetEntries(
-                                                Docketsheet = stp3_Docketsheet, 
-                                                File = file, 
-                                                Write2Excel = stp3_Write2Excel, 
-                                                Destination_location = stp3_Destination_location, 
-                                                Transpose4mlModel = stp3_Transpose4mlModel)
-                # Generally we would not want to return a dataframe in a loop like this unless we plan to 
-                # embed this code into another function that can use the resulting dataframe. 
-                
-                                    
-    # If you only want results for a single file         
-    else:
-        DocketSheet_KeyWord_Appearance = get_KeyWordAppearance_DocketsheetEntries(
-                                                Docketsheet = stp3_Docketsheet, 
-                                                File = stp3_Target_file, 
-                                                Write2Excel = stp3_Write2Excel, 
-                                                Destination_location = stp3_Destination_location, 
-                                                Transpose4mlModel = stp3_Transpose4mlModel)
-        return DocketSheet_KeyWord_Appearance
-    
-    
+
+
 
 
 

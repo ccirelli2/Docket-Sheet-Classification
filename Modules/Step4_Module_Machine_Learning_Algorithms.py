@@ -20,6 +20,14 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import BaggingClassifier
 from sklearn.ensemble import AdaBoostClassifier
 
+# WRITE FILE TO EXCEL
+
+def write_to_excel(dataframe, location, filename):
+    os.chdir(location)
+    writer = pd.ExcelWriter(filename+'.xlsx')
+    dataframe.to_excel(writer, sheet_name = 'Data')
+    writer.save()
+
 # CREATE DATAFRAMES FOR THE FEATURES AND TARGETS
 
 
@@ -39,7 +47,9 @@ def get_feature_target_dataframes(File, dataset = 'Features'):
     Return_df = ''
     
     # Read in file as a dataframe
-    df = pd.read_excel(File)
+    # Amendment 03.28.2018:  Since we are pipelining all of the stages, we will pass a dataframe.  Therefore, we need not
+    #                        read a file in as a dataframe.  
+    df = File
     # Reset Index as it currently contains the docket sheet names. 
     df_reset_index = df.reset_index()
     # Drop Col 0
@@ -110,9 +120,109 @@ def write_to_excel(dataframe, location, filename):
 
 
 
+# MASTER FUNCTION - GENERATE PREDICTIONS USING DECISION TREE
 
+def make_predictions_decisionTree(stp4_Target_dir, stp4_Depth, stp4_KeyWord, stp4_Write2Excel, 
+                                  stp4_Destination_location, stp4_Iterable, stp4_Single_File, 
+                                  stp4_Metric, df_inmemory_name):
+    '''Documentation
+    
+    Input:      i.)    Target_dir  = location where our docketsheet key word appearance dataframes are located. 
+                ii.)   Depth       = the depth that we want to use for our tree.  If not specified default 
+                                     to 8. 
+                iii.)  Write2Excel = if we want to write to Excel or work with the results in memory. 
+                                     this feature is not yet set up for the confusion matrix or class report. 
+                iv.)   Destination = where we want to write our results to. 
+                v.)    Iterable    = whether we are working with a single or multiple files. 
+                vi.)   Single_file = if we chose False for the Iterable, then we will need to specify the 
+                                     file we want to use. 
+                vii.)  Metric      = the metric that we want to use to guage the performance of our model. 
+                                     default to 'Accuracy'.  Can also chose 'Matrix' to return the confusion
+                                     matrix. 
+                viii.) KeyWord     = Choose the key word that you want to use to group the files (approachs)
+                                     to be used in the ML model. Examples include using the names of the 
+                                     ngrmas ('Bigrams') or it could be STDV vs COCOEF, etc. 
+                ix.)   df_inmemory_name 
+                                   = Added on 03.29.2018:  added to accomodate the fact that we are working with an in
+                                     memory dataframe and we need a name to pass to our Dict function below that identifies
+                                     the characteristics of the file we are passing through to the ML tree. 
+    Operations i.)     The main operation here is either to iterate a list of files in a directory to 
+                       generate the predictions or to work with one file.  That and the code is set up so 
+                       that the user can have various choices as can be inferred from the input explanations. 
+                       
+    '''
+    # Dictionary to house values
+    Dict = {}
 
+    # Change Directory
+    os.chdir(stp4_Target_dir)
+    
+    # If you are looking to iterate over an entire directory of files
+    if stp4_Iterable == True:
+    
+        #Loop over files
+        for file in os.listdir():
+        
+            # Choose the key word to group the files that are chosen by the code.  
+            if stp4_KeyWord in file:                       
+                                                          
+                # Mark start of process                            
+                print('Generating prediction for =>', '\n', file, '\n')
+                # Create the Feature & Target dataframes. 
+                Features = get_feature_target_dataframes(file, dataset = 'Features')
+                Targets  = get_feature_target_dataframes(file, dataset = 'Targets')
+                # Generate The Training Results
+                Accuracy_train = simple_decision_tree(Features, Targets, 
+                                                   stp4_Metric, Max_Depth = stp4_Depth, TrainTest = 'Train')
+                # Generate the Test Results. 
+                Accuracy_test = stp4.simple_decision_tree(Features, Targets, 
+                                                   stp4_Metric, Max_Depth = stp4_Depth, TrainTest = 'Test')
+            
+                # Add your results to the dictionary object using file name as the key. 
+                Dict[file] = (Accuracy_train, Accuracy_test)
+    
+    # If the user only wants to work with one file. 
+    elif stp4_Iterable == False:
+        
+        # Mark start of process
+        print('Generating prediction for the dataframe passed from memory')
+        # Get Features & Targets
+        Features = get_feature_target_dataframes(stp4_Single_File, dataset = 'Features')
+        Targets  = get_feature_target_dataframes(stp4_Single_File, dataset = 'Targets')
+        # Generate Prediction
+        Accuracy_train = simple_decision_tree(Features, Targets, 
+                                                  Max_Depth = stp4_Depth, TrainTest = 'Train', 
+                                                  Metric = stp4_Metric)
+        Accuracy_test = simple_decision_tree(Features, Targets, 
+                                                  Max_Depth = stp4_Depth, TrainTest = 'Test', 
+                                                  Metric = stp4_Metric)
+        
+        # Amendment 03.29.2018:  df_in_memory_name has been added as a new object and is defined
+        # in the driver program for Step4. 
+                
+        # Append results to a dictionary object. 
+        Dict[df_inmemory_name] = (Accuracy_train, Accuracy_test)
 
+    # Create Dataframe from dictionary object. 
+    df = pd.DataFrame(Dict)
+    df_transpose = df.transpose()
+    # Define the column names.  In the future, if we add more measures, we can change this. 
+    df_rename_cols = df_transpose.rename(index = str, columns = {0: 'Accuracy_train', 
+                                                                 1: 'Accuracy_test'}) 
+    df_final = df_rename_cols.sort_values(by = 'Accuracy_test', ascending = False)
+    
+    # Write to Excel
+    if stp4_Write2Excel == True:
+        print('Writing dataframe to Excel')
+        os.chdir(stp4_Destination_location)
+        File_name = 'Decision Tree Results for' + '_' + df_inmemory_name
+        print('File name => ' + File_name)
+        write_to_excel(df_final, stp4_Destination_location, File_name)
+        print('Your file has been saved to =>  ', stp4_Destination_location, '\n', '\n')
+    # If the user does not want to write to Excel return to them the dataframe in memory.     
+    else:    
+        print('Results', '\n', df_final)
+        return df_final
 
 
 
