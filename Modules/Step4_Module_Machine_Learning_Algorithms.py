@@ -101,9 +101,9 @@ def simple_decision_tree(Features, Targets, Max_Depth , TrainTest = None, Metric
         
     elif Metric == 'Matrix':
         if TrainTest == 'Train':
-            print('Matrix train', '\n', matrix_train)
+            return matrix_train
         else:
-            print('Matrix test', '\n', matrix_test)
+            return matrix_test
             
         
     # Break
@@ -221,7 +221,8 @@ def make_predictions_decisionTree(stp4_Target_dir, stp4_Depth, stp4_KeyWord, stp
         print('Your file has been saved to =>  ', stp4_Destination_location, '\n', '\n')
     # If the user does not want to write to Excel return to them the dataframe in memory.     
     else:    
-        print('Results', '\n', df_final)
+        print('Accuracy train', '\n', Accuracy_train)
+        print('Accuracy test', '\n', Accuracy_test)
         return df_final
 
 
