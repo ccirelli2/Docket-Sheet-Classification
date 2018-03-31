@@ -68,9 +68,10 @@ def get_feature_target_dataframes(File, dataset = 'Features'):
 
 #   SIMPLE DECISION TREE MODEL 
 
-def simple_decision_tree(Features, Targets, Max_Depth , TrainTest = None, Metric = 'Accuracy'):
-    X_train, X_test, y_train, y_test = train_test_split(Features, Targets)
-    clf = DecisionTreeClassifier(max_depth = Max_Depth, random_state = 50)
+def simple_decision_tree(Features, Targets, Max_Depth , TrainTest, Metric):
+    # Amendment 03:30.2018:  Added the feature to define the train and test size, set to 0.8 and 0.2
+    X_train, X_test, y_train, y_test = train_test_split(Features, Targets, train_size = 0.9, test_size = 0.1)
+    clf = DecisionTreeClassifier(max_depth = Max_Depth, random_state = 30)
     
     # Fit Algorithm
     clf.fit(X_train, y_train)
@@ -86,27 +87,36 @@ def simple_decision_tree(Features, Targets, Max_Depth , TrainTest = None, Metric
     report_test = sklearn.metrics.classification_report(y_test, clf_pred)
     matrix_test = sklearn.metrics.confusion_matrix(y_test, clf_pred)
     accuracy_test = sklearn.metrics.accuracy_score(y_test, clf_pred)
-        
-  
-    # Print Results
-            
-    if Metric == 'Accuracy':
-        if TrainTest == 'Train':
-            Accuracy_score = round(accuracy_train, 2)
-            return Accuracy_score
-        
-        else:
-            Accuracy_score = round(accuracy_test, 2)
-            return Accuracy_score
-        
-    elif Metric == 'Matrix':
-        if TrainTest == 'Train':
-            return matrix_train
-        else:
-            return matrix_test
-            
-        
-    # Break
+    
+    # Create Dataframe to house    Amendment 03.31.2018, added object to house predictions.  Will need to capture the index as there will
+                                   # be no other way to reference back to the original docketsheet which entries were used. 
+    df_Indv_Predictions = pd.DataFrame({}, index = range(0,len(y_test)))
+    df_Indv_Predictions['y_test'] = list(y_test)
+    df_Indv_Predictions['clf_pred'] = list(clf_pred)
+    
+    # Generate Results Based on Metric / TrainTest Selection
+    
+    # Classification Report
+    if Metric == 'Report' and TrainTest == 'Train':
+        return report_train
+    elif Metric == 'Report' and TrainTest == 'Test':
+        return report_test
+    # Confusion Matrix
+    elif Metric == 'Matrix' and TrainTest == 'Train':
+        return matrix_train
+    elif Metric == 'Matrix' and TrainTest == 'Test':
+        return matrix_test
+    # Accuracy Score. 
+    elif Metric == 'Accuracy' and TrainTest == 'Train':
+        Accuracy_score = round(accuracy_train, 2)
+        return Accuracy_score   
+    elif Metric == 'Accuracy' and TrainTest == 'Test':
+        Accuracy_score = round(accuracy_test, 2)
+        return Accuracy_score
+    elif Metric == 'Export_Indv_Predictions' and TrainTest == 'Test':   #Amendment 03.31.2018:  Added the feature to export indv pred
+        return df_Indv_Predictions
+    
+    # BREAK
 
 # WRITE FILE TO EXCEL
 
@@ -126,6 +136,10 @@ def make_predictions_decisionTree(stp4_Target_dir, stp4_Depth, stp4_KeyWord, stp
                                   stp4_Destination_location, stp4_Iterable, stp4_Single_File, 
                                   stp4_Metric, df_inmemory_name):
     '''Documentation
+    
+    Purpose                          i) To provide the user the ability to select various measurement options. 
+                                    ii.) To provide the option to iterate over a series of files to make multiple 
+                                     predictions or a single predictions. 
     
     Input:      i.)    Target_dir  = location where our docketsheet key word appearance dataframes are located. 
                 ii.)   Depth       = the depth that we want to use for our tree.  If not specified default 

@@ -26,7 +26,7 @@ def measure_dependencies(File):
                      all of the stages. 
     '''   
     # Import File 
-    df = pd.read_excel(File)
+    df = File                       # Amendment 03.31.2018:  Changed to File from reading a file in using pandas.  In memory work. 
     # Create list of columnnames
     df_columns = df.columns
     # Define the list to catch key words

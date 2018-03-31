@@ -185,7 +185,7 @@ def limit_dataframe(dataframe, methodology):
     elif methodology == 'Top15_highest_COCOEF' or methodology == 'Top15_highest_STDV':
         # If this methodology is selected, do nothing. 
         # Added 03.28.2018
-        delimiter = dataframe.iloc[:,1] > .02     # changed to .02 on 03.29.2018
+        delimiter = dataframe.iloc[:,1] > .3     # changed to .03 on 03.31.2018
         df_limited = dataframe[delimiter]
         
         #df_limited = dataframe  * commented out due to the testing of the above change. 
