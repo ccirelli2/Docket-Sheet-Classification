@@ -134,6 +134,19 @@ def simple_decision_tree(stp4_Max_Depth , stp4_TrainTest, stp4_Metric, stp4_Dock
         df_Indv_Predictions['clf_pred_test'] = list(clf_pred_test)
         print('\n', 'Returning the individual predictions for y_test (actual) and clf_pred_test (predicted values) ', '\n')
         return df_Indv_Predictions      
+    
+    elif stp4_Metric == 'Export_All':
+        df_x_train = pd.DataFrame(X_train)
+        df_x_test = pd.DataFrame(X_test)
+        df_y_train = pd.DataFrame(y_train)
+        df_y_test = pd.DataFrame(y_test)
+        df_clf_pred_test = pd.DataFrame(clf_pred_test)
+        print('Step4: Generating the predictions...\n')
+        print('X_train\n', df_x_train.head(),'\n')
+        print('X_test\n', df_x_test.head(),'\n')
+        print('y_train\n', df_y_train.head(),'\n')
+        print('y_test\n', df_y_test.head(),'\n')
+        print('clf_pred_test', clf_pred_test)
         
     # BREAK
 
