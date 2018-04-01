@@ -371,9 +371,40 @@ def get_DocketSheet_KeyWord_Appearance_Master(stp3_Docketsheet,
                                                 Transpose4mlModel = stp3_Transpose4mlModel)
         return DocketSheet_KeyWord_Appearance
     
+# TRANSFORM THE MASTER DOCKETSHEET FOR USE IN OUR MACHINE LEARNING ALGORITHM DRIVER FUNCTION
+# Added on 03.31.2018. 
+def transform_Master_Docketsheet(Excel_file, Write2Excel, destination_location):
+    '''Documentation
+    Purpose:        The purpose of this code is to transform the columns of the Master Docketsheet file to 
+                    match that of the original Docketsheet file so that it may be fed into our existing
+                    functions for processing
+    Operations:     i.) Drop irrelevant columns, ii.) Add missing columns, iii.) Test                
+    '''
     
-
-
+    # Read File in as a pandas dataframe
+    df_master = pd.read_excel(Excel_file)
+    # Drop Irrelevant Columns
+    df_dropcols = df_master.drop(['document_try_flag', 'document_flag', 'document_link', 
+                                  'document_text', 'state', 'district', 'row_number'], axis = 1)
+    # Add missing columns present in the original docketsheet
+    df_dropcols['Index'] = [x for x in range(0,len(df_master))]
+    df_dropcols['Relevant'] = [x for x in range(0,len(df_master))]
+    df_dropcols['Time Period'] = [x for x in range(0,len(df_master))]
+    df_dropcols['Unnamed'] = [x for x in range(0,len(df_master))]
+    
+    # Write to Excel
+    if Write2Excel == True:
+        print('Writing dataframe to Excel')
+        os.chdir(destination_location)
+        File_name = 'Master_Docketsheet_transformed'
+        print('File name => ' + File_name)
+        write_to_excel(df_dropcols, destination_location, File_name)
+        print('Your file has been saved to =>  ', destination_location, '\n', '\n')
+        # Otherwise, return the dataframe to the user.    
+    else:
+        return df_dropcols
+    
+    
 
 
 
