@@ -68,56 +68,77 @@ def get_feature_target_dataframes(File, dataset = 'Features'):
 
 #   SIMPLE DECISION TREE MODEL 
 
-def simple_decision_tree(Features, Targets, Max_Depth , TrainTest, Metric):
+def simple_decision_tree(stp4_Max_Depth , stp4_TrainTest, stp4_Metric, stp4_Docketsheet_wordFreqFile):
+    
+    # Get Features & Targets
+    Features = get_feature_target_dataframes(stp4_Docketsheet_wordFreqFile, dataset = 'Features')
+    Targets  = get_feature_target_dataframes(stp4_Docketsheet_wordFreqFile, dataset = 'Targets')
+    
     # Amendment 03:30.2018:  Added the feature to define the train and test size, set to 0.8 and 0.2
     X_train, X_test, y_train, y_test = train_test_split(Features, Targets, train_size = 0.9, test_size = 0.1)
-    clf = DecisionTreeClassifier(max_depth = Max_Depth, random_state = 30)
     
+    clf = DecisionTreeClassifier(max_depth = stp4_Max_Depth, random_state = None) # Amendment 03.31.2018: Random state needs to be set to 0 else
+                                                                          # we won't be able to determine the order of our input rows. 
     # Fit Algorithm
-    clf.fit(X_train, y_train)
+    clf.fit(X_train, y_train)     #****Why 
     
     #   Training Set
-    clf_pred = clf.predict(X_train)
-    report_train = sklearn.metrics.classification_report(y_train, clf_pred)
-    matrix_train = sklearn.metrics.confusion_matrix(y_train, clf_pred)
-    accuracy_train = sklearn.metrics.accuracy_score(y_train, clf_pred)
+    clf_pred_train = clf.predict(X_train)                                     # Amendment 03.31.2018: amended to clf_pred_train from clf__pred
+    report_train = sklearn.metrics.classification_report(y_train, clf_pred_train)
+    matrix_train = sklearn.metrics.confusion_matrix(y_train, clf_pred_train)
+    accuracy_train = sklearn.metrics.accuracy_score(y_train, clf_pred_train)
     
     # Test
-    clf_pred = clf.predict(X_test)
-    report_test = sklearn.metrics.classification_report(y_test, clf_pred)
-    matrix_test = sklearn.metrics.confusion_matrix(y_test, clf_pred)
-    accuracy_test = sklearn.metrics.accuracy_score(y_test, clf_pred)
-    
-    # Create Dataframe to house    Amendment 03.31.2018, added object to house predictions.  Will need to capture the index as there will
-                                   # be no other way to reference back to the original docketsheet which entries were used. 
-    df_Indv_Predictions = pd.DataFrame({}, index = range(0,len(y_test)))
-    df_Indv_Predictions['y_test'] = list(y_test)
-    df_Indv_Predictions['clf_pred'] = list(clf_pred)
-    
+    clf_pred_test = clf.predict(X_test)  # Why is this X_test and if so, why are we printing the matrix for y_test?   
+    report_test = sklearn.metrics.classification_report(y_test, clf_pred_test)
+    matrix_test = sklearn.metrics.confusion_matrix(y_test, clf_pred_test)
+    accuracy_test = sklearn.metrics.accuracy_score(y_test, clf_pred_test)
+       
     # Generate Results Based on Metric / TrainTest Selection
-    
-    # Classification Report
-    if Metric == 'Report' and TrainTest == 'Train':
-        return report_train
-    elif Metric == 'Report' and TrainTest == 'Test':
-        return report_test
+    # Amendment made 03.31.2018:  Consolidated Report, Matrix and Accuracy functions to return Train and Test results at the same time. 
+    if stp4_Metric == 'Report':
+        print('Returning training report:\n')
+        print(report_train, '\n')
+        print('Returning test report:\n')
+        print(report_test, '\n')
+              
     # Confusion Matrix
-    elif Metric == 'Matrix' and TrainTest == 'Train':
-        return matrix_train
-    elif Metric == 'Matrix' and TrainTest == 'Test':
-        return matrix_test
+    elif stp4_Metric == 'Matrix':
+        print('Returning training confusion matrix:\n')
+        print(matrix_train, '\n')
+        print('Returning test confusion matrix:\n')
+        print(matrix_test, '\n')
+              
     # Accuracy Score. 
-    elif Metric == 'Accuracy' and TrainTest == 'Train':
-        Accuracy_score = round(accuracy_train, 2)
-        return Accuracy_score   
-    elif Metric == 'Accuracy' and TrainTest == 'Test':
-        Accuracy_score = round(accuracy_test, 2)
-        return Accuracy_score
-    elif Metric == 'Export_Indv_Predictions' and TrainTest == 'Test':   #Amendment 03.31.2018:  Added the feature to export indv pred
+    elif stp4_Metric == 'Accuracy':
+        print('Returning training accuracy score:')
+        Accuracy_score_train = round(accuracy_train, 2)
+        print('\tAccuracy_score for the training set => ', Accuracy_score_train, '\n')
+        Accuracy_score_test = round(accuracy_test, 2)
+        print('Returning test accuracy score:')
+        print('\tAccuracy score for test set =>', Accuracy_score_test, '\n')
+            
+    #Amendment 03.31.2018, added object to house predictions.  Will need to capture the index as there will
+    # be no other way to reference back to the original docketsheet which entries were used. 
+    
+    elif stp4_Metric == 'Export_Indv_Predictions' and stp4_TrainTest == 'Train':   
+        df_Indv_Predictions = pd.DataFrame({}, index = range(0,len(y_train)))
+        df_Indv_Predictions['y_train'] = list(y_train)
+        df_Indv_Predictions['clf_pred_train'] = list(clf_pred_train)
+        print('\n', 'Returning the individual predictions for y_train (actual) and clf_pred_train (predicted values) ', '\n')
         return df_Indv_Predictions
     
+    elif stp4_Metric == 'Export_Indv_Predictions' and stp4_TrainTest == 'Test':   
+        df_Indv_Predictions = pd.DataFrame({}, index = range(0,len(y_test)))
+        df_Indv_Predictions['y_test'] = list(y_test)
+        df_Indv_Predictions['clf_pred_test'] = list(clf_pred_test)
+        print('\n', 'Returning the individual predictions for y_test (actual) and clf_pred_test (predicted values) ', '\n')
+        return df_Indv_Predictions      
+        
     # BREAK
 
+    
+    
 # WRITE FILE TO EXCEL
 
 def write_to_excel(dataframe, location, filename):
@@ -127,10 +148,20 @@ def write_to_excel(dataframe, location, filename):
     writer.save()
 
     # BREAK
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
-
-# MASTER FUNCTION - GENERATE PREDICTIONS USING DECISION TREE
+# *****DEPRECATED VERSION OF THE DECISION TREE DRIVER.  NO LONGER IN USE
 
 def make_predictions_decisionTree(stp4_Target_dir, stp4_Depth, stp4_KeyWord, stp4_Write2Excel, 
                                   stp4_Destination_location, stp4_Iterable, stp4_Single_File, 
@@ -238,15 +269,6 @@ def make_predictions_decisionTree(stp4_Target_dir, stp4_Depth, stp4_KeyWord, stp
         print('Accuracy train', '\n', Accuracy_train)
         print('Accuracy test', '\n', Accuracy_test)
         return df_final
-
-
-
-
-
-
-
-
-
 
 
 
